@@ -1,2 +1,2 @@
 # chess-game
-Made with react, node
+Made with react, node.
