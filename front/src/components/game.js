@@ -5,6 +5,15 @@ import Board from './board.js';
 import King from '../pieces/king'
 import FallenSoldierBlock from './fallen-soldier-block.js';
 import initialiseChessBoard from '../helpers/board-initialiser.js';
+import API from "../helpers/API";
+import {Button, FormGroup, FormControl, FormLabel} from "react-bootstrap";
+import board from "./board.js";
+import knight from "../pieces/knight";
+import Knight from "../pieces/knight";
+import Bishop from "../pieces/bishop";
+import Piece from "../pieces/piece";
+import Rook from "../pieces/rook";
+
 
 export default class Game extends React.Component {
     constructor() {
@@ -16,7 +25,8 @@ export default class Game extends React.Component {
             player: 1,
             sourceSelection: -1,
             status: '',
-            turn: 'white'
+            turn: 'white',
+            game_id: 1
         }
     }
 
@@ -51,6 +61,7 @@ export default class Game extends React.Component {
             const whiteFallenSoldiers = [];
             const blackFallenSoldiers = [];
             const isDestEnemyOccupied = Boolean(squares[i]);
+            //console.log(squares[this.state.sourceSelection]);
             const isMovePossible = squares[this.state.sourceSelection].isMovePossible(this.state.sourceSelection, i, isDestEnemyOccupied);
 
             if (isMovePossible) {
@@ -131,8 +142,59 @@ export default class Game extends React.Component {
         //todo
     }
 
-    render() {
+    saveGame = async () => {
+        try {
+            const {data} = await API.save_game(1, this.state.turn, this.state.squares, this.state.blackFallenSoldiers, this.state.whiteFallenSoldiers);
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
+    loadGame = async () => {
+        try {
+            const res = await API.load_game(this.state.game_id);
+            let player_number = 0;
+            if (res.status === 200) {
+                if (res.data.player_turn === 'white') {
+                    player_number = 1;
+                } else {
+                    player_number = 2;
+                }
+
+              /*  res.data.board.forEach(function (part, index, arr) {
+                    if (arr[index]) {
+                        arr[index] = Object.assign(new TODO ASSIGN ALL PIECES(), arr[index]);
+                        console.log(arr[index]);
+
+                    }
+                });*/
+
+                this.setState({
+                    turn: res.data.player_turn,
+                    player: player_number,
+                    squares: res.data.board,
+                    blackFallenSoldiers: res.data.blackFallenSoldiers,
+                    whiteFallenSoldiers: res.data.whiteFallenSoldiers,
+                    sourceSelection: -1,
+                    status: '',
+                })
+            } else {
+                console.log("loading failed");
+            }
+
+
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    handleChange = (event) => {
+        this.setState({
+            [event.target.id]: event.target.value
+        });
+    };
+
+    render() {
         return (
             <div>
                 <div className="game">
@@ -161,8 +223,26 @@ export default class Game extends React.Component {
                     </div>
                 </div>
 
-            </div>
+                <div className="Save">
+                    <button onClick={this.saveGame} type="submit">
+                        SaveGame
+                    </button>
+                </div>
+                <div className="Load Game">
+                    <FormGroup controlId="game_id" variant="secondary" size="sm">
+                        <FormLabel>Game ID</FormLabel>
+                        <FormControl
+                            value={this.state.game_id}
+                            onChange={this.handleChange}
+                            type="game_id"
+                        />
+                    </FormGroup>
+                    <Button onClick={this.loadGame} block variant="secondary" size="sm" type="button">
+                        Load Game
+                    </Button>
+                </div>
 
+            </div>
 
         );
     }
