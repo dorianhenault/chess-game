@@ -10,27 +10,26 @@ async function saveGame(req, res) {
                 findBoard.player_turn = player_turn;
                 findBoard.whiteFallenSoldiers = whiteFallenSoldiers;
                 findBoard.blackFallenSoldiers = blackFallenSoldiers;
-                await findBoard.save();
-
             } else {
                 findBoard = new Board(
                     {
-                        game_id: 1,
+                        game_id: game_id,
                         player_turn: player_turn,
                         board: board,
                         whiteFallenSoldiers: whiteFallenSoldiers,
                         blackFallenSoldiers: blackFallenSoldiers
                     }
                 );
-
-                await findBoard.save();
             }
+
+            await findBoard.save();
             return res.status(200).json({
                 text: "Success",
                 game_id: game_id,
                 player_turn: player_turn
             });
         } catch (error) {
+            console.log(error)
             return res.status(500).json({error});
         }
 
@@ -62,6 +61,7 @@ async function loadGame(req, res) {
         }
 
     } catch (error) {
+        console.log(error)
         return res.status(500).json({error});
     }
 

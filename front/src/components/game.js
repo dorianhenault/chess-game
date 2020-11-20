@@ -1,19 +1,19 @@
-import React from 'react';
+import React, {useState} from 'react';
 
 import '../index.css';
 import Board from './board.js';
-import King from '../pieces/king'
 import FallenSoldierBlock from './fallen-soldier-block.js';
 import initialiseChessBoard from '../helpers/board-initialiser.js';
 import API from "../helpers/API";
-import {Button, FormGroup, FormControl, FormLabel} from "react-bootstrap";
-import board from "./board.js";
-import knight from "../pieces/knight";
-import Knight from "../pieces/knight";
+import {Button, FormGroup, FormControl, FormLabel, Modal} from "react-bootstrap";
 import Bishop from "../pieces/bishop";
-import Piece from "../pieces/piece";
+import King from "../pieces/king";
+import Knight from "../pieces/knight";
+import Pawn from "../pieces/pawn";
+import Queen from "../pieces/queen";
 import Rook from "../pieces/rook";
 
+const pieceUrls = require('../dictionaries/piecesUrls.json');
 
 export default class Game extends React.Component {
     constructor() {
@@ -144,7 +144,7 @@ export default class Game extends React.Component {
 
     saveGame = async () => {
         try {
-            const {data} = await API.save_game(1, this.state.turn, this.state.squares, this.state.blackFallenSoldiers, this.state.whiteFallenSoldiers);
+            const {data} = await API.save_game(this.state.game_id, this.state.turn, this.state.squares, this.state.blackFallenSoldiers, this.state.whiteFallenSoldiers);
         } catch (error) {
             console.error(error);
         }
@@ -161,13 +161,18 @@ export default class Game extends React.Component {
                     player_number = 2;
                 }
 
-              /*  res.data.board.forEach(function (part, index, arr) {
+                const pieceClasses = new Map([['Bishop', Bishop], ['King', King], ['Knight', Knight], ['Pawn', Pawn], ['Queen', Queen], ['Rook', Rook]]);
+                res.data.board.forEach(function (part, index, arr) {
                     if (arr[index]) {
-                        arr[index] = Object.assign(new TODO ASSIGN ALL PIECES(), arr[index]);
-                        console.log(arr[index]);
+                        let pieceUrl = arr[index].style.backgroundImage;
+                        for (let pieceUrlsKey in pieceUrls) {
+                            if (pieceUrl.includes(pieceUrls[pieceUrlsKey]["white"]) || pieceUrl.includes(pieceUrls[pieceUrlsKey]["black"])) {
+                                arr[index] = Object.assign(new (pieceClasses.get(pieceUrlsKey)), arr[index]);
+                            }
+                        }
 
                     }
-                });*/
+                });
 
                 this.setState({
                     turn: res.data.player_turn,
@@ -190,11 +195,13 @@ export default class Game extends React.Component {
 
     handleChange = (event) => {
         this.setState({
-            [event.target.id]: event.target.value
+            game_id: parseInt(event.target.value)
         });
     };
 
+
     render() {
+
         return (
             <div>
                 <div className="game">
@@ -222,21 +229,20 @@ export default class Game extends React.Component {
 
                     </div>
                 </div>
-
+                <FormGroup controlId="load_game" variant="secondary" size="sm">
+                    <FormLabel>Game ID</FormLabel>
+                    <FormControl
+                        defaultValue={this.state.game_id}
+                        onChange={this.handleChange}
+                        type="game_id"
+                    />
+                </FormGroup>
                 <div className="Save">
-                    <button onClick={this.saveGame} type="submit">
+                    <Button onClick={this.saveGame} block variant="secondary" size="sm" type="button">
                         SaveGame
-                    </button>
+                    </Button>
                 </div>
-                <div className="Load Game">
-                    <FormGroup controlId="game_id" variant="secondary" size="sm">
-                        <FormLabel>Game ID</FormLabel>
-                        <FormControl
-                            value={this.state.game_id}
-                            onChange={this.handleChange}
-                            type="game_id"
-                        />
-                    </FormGroup>
+                <div className="Load_Game">
                     <Button onClick={this.loadGame} block variant="secondary" size="sm" type="button">
                         Load Game
                     </Button>

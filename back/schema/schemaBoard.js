@@ -2,9 +2,7 @@ const mongoose = require("mongoose");
 const pieceSchema = mongoose.Schema(
     {
         player: {
-            type: Number,
-            unique: true,
-            required: true
+            type: Number
         },
         style: {},
         initialPositions: {}

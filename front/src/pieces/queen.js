@@ -1,9 +1,11 @@
 import Piece from './piece.js';
 import { isSameRow, isSameColumn, isSameDiagonal, isPathClean } from '../helpers'
+const queenUrls = require('../dictionaries/piecesUrls.json')["Queen"];
+
 
 export default class Queen extends Piece {
   constructor(player) {
-    super(player, (player === 1 ? "https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg" : "https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg"));
+    super(player, (player === 1 ? queenUrls["white"] : queenUrls["black"]));
   }
 
   isMovePossible(src, dest, squares) {

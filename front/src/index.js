@@ -6,7 +6,9 @@ import Game from './components/game.js'
 
 
 ReactDOM.render(
-  <Game />,
-  document.getElementById('root')
+    <div>
+        <Game/>
+    </div>,
+    document.getElementById('root')
 );
 
