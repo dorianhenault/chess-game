@@ -12,7 +12,7 @@ const pieceSchema = mongoose.Schema(
 
 const boardSchema = mongoose.Schema(
     {
-        game_id: {
+        gameId: {
             type: Number,
             unique: true,
             required: true

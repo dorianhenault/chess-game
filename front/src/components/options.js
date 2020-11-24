@@ -9,6 +9,7 @@ import Knight from "../pieces/knight";
 import Pawn from "../pieces/pawn";
 import Queen from "../pieces/queen";
 import Rook from "../pieces/rook";
+
 const pieceUrls = require('../dictionaries/piecesUrls.json');
 
 
@@ -16,25 +17,15 @@ export default class Options extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            game_id: 1,
-            isSaveModalDisplayed : false,
-            isLoadModalDisplayed : false
+            isSaveModalDisplayed: true,
+            isLoadModalDisplayed: false,
+            optionsGameId: this.props.gameId
         }
     }
 
-    saveGame = async () => {
-        try {
-            const {data} = await API.save_game(this.state.game_id, this.props.turn, this.props.squares, this.props.blackFallenSoldiers, this.props.whiteFallenSoldiers);
-        } catch (error) {
-            console.error(error);
-        }
-
-        this.saveModalDisplay(false);
-    };
-
     loadGame = async () => {
         try {
-            const res = await API.load_game(this.state.game_id);
+            const res = await API.load_game(this.state.optionsGameId);
             let player_number = 0;
             if (res.status === 200) {
                 if (res.data.player_turn === 'white') {
@@ -55,7 +46,7 @@ export default class Options extends React.Component {
                     }
                 });
 
-                this.props.loadGame(res.data.player_turn, player_number, res.data.board, res.data.blackFallenSoldiers, res.data.whiteFallenSoldiers);
+                this.props.loadGame(this.state.optionsGameId, res.data.player_turn, player_number, res.data.board, res.data.blackFallenSoldiers, res.data.whiteFallenSoldiers);
                 this.loadModalDisplay(false);
 
             } else {
@@ -66,11 +57,13 @@ export default class Options extends React.Component {
         } catch (error) {
             console.error(error);
         }
+
+        this.saveModalDisplay(false);
     };
 
     handleChange = (event) => {
         this.setState({
-            game_id: parseInt(event.target.value)
+            optionsGameId: parseInt(event.target.value)
         });
     };
 
@@ -92,32 +85,24 @@ export default class Options extends React.Component {
 
         return (
             <>
-                <div className="form-group">
-                    <Button onClick={() => this.saveModalDisplay(true)} variant="secondary" type="button">
-                        Save Game
-                    </Button>
-                </div>
 
-                <Modal show={this.state.isSaveModalDisplayed} onHide={() => this.saveModalDisplay(false)}>
+                <Modal show={this.state.isSaveModalDisplayed}>
                     <Modal.Header closeButton>
-                        <Modal.Title>Game ID ?</Modal.Title>
+                        <Modal.Title>Game ID ? (Default 1)</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
                         <FormGroup className="form-group" variant="secondary">
                             <FormControl
                                 className="form-control form-control-sm"
-                                defaultValue={this.state.game_id}
+                                defaultValue={this.state.optionsGameId}
                                 onChange={this.handleChange}
-                                type="game_id"
+                                type="optionsGameId"
                             />
                         </FormGroup>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="secondary" onClick={() => this.saveModalDisplay(false)}>
-                            Close
-                        </Button>
-                        <Button variant="primary" onClick={this.saveGame}>
-                            Save
+                        <Button variant="primary" onClick={this.loadGame}>
+                            Save ID
                         </Button>
                     </Modal.Footer>
                 </Modal>
@@ -144,9 +129,9 @@ export default class Options extends React.Component {
                         <FormGroup className="form-group" variant="secondary">
                             <FormControl
                                 className="form-control form-control-sm"
-                                defaultValue={this.state.game_id}
+                                defaultValue={this.state.optionsGameId}
                                 onChange={this.handleChange}
-                                type="game_id"
+                                type="optionsGameId"
                             />
                         </FormGroup>
                     </Modal.Body>

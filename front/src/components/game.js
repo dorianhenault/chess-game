@@ -6,6 +6,7 @@ import FallenSoldierBlock from './fallen-soldier-block.js';
 import initialiseChessBoard from '../helpers/board-initialiser.js';
 import King from "../pieces/king";
 import Options from "./options";
+import API from "../helpers/API";
 
 
 export default class Game extends React.Component {
@@ -19,7 +20,7 @@ export default class Game extends React.Component {
             sourceSelection: -1,
             status: '',
             turn: 'white',
-            game_id: 1
+            gameId: 1
         }
 
         this.loadGame = this.loadGame.bind(this);
@@ -99,7 +100,11 @@ export default class Game extends React.Component {
                         player,
                         status: '',
                         turn
-                    }));
+                    }), () => {
+                        this.saveGame();
+                    });
+
+
                 }
             } else {
                 this.setState({
@@ -110,8 +115,9 @@ export default class Game extends React.Component {
         }
     }
 
-    loadGame(player_turn, player_number, squares, blackFallenSoldiers, whiteFallenSoldiers) {
+    loadGame(gameId, player_turn, player_number, squares, blackFallenSoldiers, whiteFallenSoldiers) {
         this.setState({
+            gameId: gameId,
             turn: player_turn,
             player: player_number,
             squares: squares,
@@ -121,6 +127,14 @@ export default class Game extends React.Component {
             status: ''
         });
     }
+
+    saveGame() {
+        try {
+            API.save_game(this.state.gameId, this.state.turn, this.state.squares, this.state.blackFallenSoldiers, this.state.whiteFallenSoldiers).then(r => console.log(r));
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
     getKingPosition(squares, player) {
         return squares.reduce((acc, curr, i) =>
@@ -185,6 +199,7 @@ export default class Game extends React.Component {
                     blackFallenSoldiers={this.state.blackFallenSoldiers}
                     whiteFallenSoldiers={this.state.whiteFallenSoldiers}
                     loadGame={this.loadGame}
+                    gameId={this.state.gameId}
                 />
 
             </div>

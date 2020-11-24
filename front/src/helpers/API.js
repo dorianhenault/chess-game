@@ -6,11 +6,11 @@ const headers = {
 const url = "http://localhost:8000";
 
 export default {
-    save_game: function (game_id, player_turn, board, blackFallenSoldiers, whiteFallenSoldiers) {
+    save_game: function (gameId, player_turn, board, blackFallenSoldiers, whiteFallenSoldiers) {
         return axios.post(
             `${url}/save`,
             {
-                game_id,
+                gameId,
                 player_turn,
                 board,
                 blackFallenSoldiers,
@@ -22,11 +22,11 @@ export default {
         );
     },
 
-    load_game: function (game_id) {
+    load_game: function (gameId) {
         return axios.post(
             `${url}/load`,
             {
-                game_id,
+                gameId,
             },
             {
                 headers: headers
