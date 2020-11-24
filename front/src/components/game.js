@@ -1,19 +1,12 @@
-import React, {useState} from 'react';
+import React from 'react';
 
 import '../index.css';
 import Board from './board.js';
 import FallenSoldierBlock from './fallen-soldier-block.js';
 import initialiseChessBoard from '../helpers/board-initialiser.js';
-import API from "../helpers/API";
-import {Button, FormGroup, FormControl, FormLabel, Modal} from "react-bootstrap";
-import Bishop from "../pieces/bishop";
 import King from "../pieces/king";
-import Knight from "../pieces/knight";
-import Pawn from "../pieces/pawn";
-import Queen from "../pieces/queen";
-import Rook from "../pieces/rook";
+import Options from "./options";
 
-const pieceUrls = require('../dictionaries/piecesUrls.json');
 
 export default class Game extends React.Component {
     constructor() {
@@ -28,6 +21,8 @@ export default class Game extends React.Component {
             turn: 'white',
             game_id: 1
         }
+
+        this.loadGame = this.loadGame.bind(this);
     }
 
     handleClick(i) {
@@ -115,6 +110,18 @@ export default class Game extends React.Component {
         }
     }
 
+    loadGame(player_turn, player_number, squares, blackFallenSoldiers, whiteFallenSoldiers) {
+        this.setState({
+            turn: player_turn,
+            player: player_number,
+            squares: squares,
+            blackFallenSoldiers: blackFallenSoldiers,
+            whiteFallenSoldiers: whiteFallenSoldiers,
+            sourceSelection: -1,
+            status: ''
+        });
+    }
+
     getKingPosition(squares, player) {
         return squares.reduce((acc, curr, i) =>
             acc || //King may be only one, if we had found it, returned his position
@@ -142,66 +149,8 @@ export default class Game extends React.Component {
         //todo
     }
 
-    saveGame = async () => {
-        try {
-            const {data} = await API.save_game(this.state.game_id, this.state.turn, this.state.squares, this.state.blackFallenSoldiers, this.state.whiteFallenSoldiers);
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-    loadGame = async () => {
-        try {
-            const res = await API.load_game(this.state.game_id);
-            let player_number = 0;
-            if (res.status === 200) {
-                if (res.data.player_turn === 'white') {
-                    player_number = 1;
-                } else {
-                    player_number = 2;
-                }
-
-                const pieceClasses = new Map([['Bishop', Bishop], ['King', King], ['Knight', Knight], ['Pawn', Pawn], ['Queen', Queen], ['Rook', Rook]]);
-                res.data.board.forEach(function (part, index, arr) {
-                    if (arr[index]) {
-                        let pieceUrl = arr[index].style.backgroundImage;
-                        for (let pieceUrlsKey in pieceUrls) {
-                            if (pieceUrl.includes(pieceUrls[pieceUrlsKey]["white"]) || pieceUrl.includes(pieceUrls[pieceUrlsKey]["black"])) {
-                                arr[index] = Object.assign(new (pieceClasses.get(pieceUrlsKey)), arr[index]);
-                            }
-                        }
-
-                    }
-                });
-
-                this.setState({
-                    turn: res.data.player_turn,
-                    player: player_number,
-                    squares: res.data.board,
-                    blackFallenSoldiers: res.data.blackFallenSoldiers,
-                    whiteFallenSoldiers: res.data.whiteFallenSoldiers,
-                    sourceSelection: -1,
-                    status: '',
-                })
-            } else {
-                console.log("loading failed");
-            }
-
-
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-    handleChange = (event) => {
-        this.setState({
-            game_id: parseInt(event.target.value)
-        });
-    };
-
 
     render() {
-
         return (
             <div>
                 <div className="game">
@@ -229,24 +178,14 @@ export default class Game extends React.Component {
 
                     </div>
                 </div>
-                <FormGroup controlId="load_game" variant="secondary" size="sm">
-                    <FormLabel>Game ID</FormLabel>
-                    <FormControl
-                        defaultValue={this.state.game_id}
-                        onChange={this.handleChange}
-                        type="game_id"
-                    />
-                </FormGroup>
-                <div className="Save">
-                    <Button onClick={this.saveGame} block variant="secondary" size="sm" type="button">
-                        SaveGame
-                    </Button>
-                </div>
-                <div className="Load_Game">
-                    <Button onClick={this.loadGame} block variant="secondary" size="sm" type="button">
-                        Load Game
-                    </Button>
-                </div>
+                <Options
+                    turn={this.state.turn}
+                    player={this.state.player}
+                    squares={this.state.squares}
+                    blackFallenSoldiers={this.state.blackFallenSoldiers}
+                    whiteFallenSoldiers={this.state.whiteFallenSoldiers}
+                    loadGame={this.loadGame}
+                />
 
             </div>
 
