@@ -23,7 +23,8 @@ export default class Game extends React.Component {
             gameId: 1
         }
 
-        this.loadGame = this.loadGame.bind(this);
+        this.updateGameInfos = this.updateGameInfos.bind(this);
+        this.updateGameId = this.updateGameId.bind(this);
     }
 
     handleClick(i) {
@@ -115,7 +116,8 @@ export default class Game extends React.Component {
         }
     }
 
-    loadGame(gameId, player_turn, player_number, squares, blackFallenSoldiers, whiteFallenSoldiers) {
+    updateGameInfos(gameId, player_turn, player_number, squares, blackFallenSoldiers, whiteFallenSoldiers) {
+
         this.setState({
             gameId: gameId,
             turn: player_turn,
@@ -128,13 +130,20 @@ export default class Game extends React.Component {
         });
     }
 
+    updateGameId(gameId) {
+        this.setState({
+            gameId: gameId,
+        });
+    }
+
     saveGame() {
         try {
-            API.save_game(this.state.gameId, this.state.turn, this.state.squares, this.state.blackFallenSoldiers, this.state.whiteFallenSoldiers).then(r => console.log(r));
+            API.save_game(this.state.gameId, this.state.turn, this.state.squares, this.state.blackFallenSoldiers, this.state.whiteFallenSoldiers);
         } catch (error) {
             console.error(error);
         }
-    };
+        API.socket.emit("game_" + this.state.gameId, this.state)
+    }
 
     getKingPosition(squares, player) {
         return squares.reduce((acc, curr, i) =>
@@ -165,6 +174,7 @@ export default class Game extends React.Component {
 
 
     render() {
+
         return (
             <div>
                 <div className="game">
@@ -198,7 +208,8 @@ export default class Game extends React.Component {
                     squares={this.state.squares}
                     blackFallenSoldiers={this.state.blackFallenSoldiers}
                     whiteFallenSoldiers={this.state.whiteFallenSoldiers}
-                    loadGame={this.loadGame}
+                    updateGameInfos={this.updateGameInfos}
+                    updateGameId={this.updateGameId}
                     gameId={this.state.gameId}
                 />
 

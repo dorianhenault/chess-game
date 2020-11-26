@@ -5,10 +5,10 @@ const bodyParser = require('body-parser');
 //db connection
 mongoose
     .connect("mongodb://localhost/db", {useNewUrlParser: true})
-    .then(()=>{
+    .then(() => {
         console.log("Connected to mongoDB");
     })
-    .catch((e)=>{
+    .catch((e) => {
         console.log("Error while connecting DB");
         console.log(e);
     });
@@ -39,5 +39,34 @@ app.use("", router);
 require(__dirname + "/controllers/boardController")(router);
 
 //Définition and listening port setup
+const http = require('http').createServer(app);
 const port = 8000;
-app.listen(port, () => console.log(`Listening on port ${port}`));
+const io = require('socket.io')(http, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
+http.listen(port, () => console.log(`Listening on port ${port}`));
+
+//socketIO
+io.on('connection', (socket) => {
+
+    //todo handle client disconnect
+    /*socket.on('disconnect', () => {
+        console.log('user disconnected');
+    });*/
+
+    socket.on('gameStartId', (gameId) => {
+        console.log(gameId + " Joined");
+        socket.join("game_" + gameId)
+        socket.on("game_" + gameId, (gameData) => {
+            console.log(gameId)
+            console.log(gameData.player)
+            console.log("--")
+            socket.to("game_" + gameId).emit("gameData", gameData);
+        });
+
+    });
+
+});

@@ -21,9 +21,37 @@ export default class Options extends React.Component {
             isLoadModalDisplayed: false,
             optionsGameId: this.props.gameId
         }
+
+        API.socket.on("gameData", (data) => {
+            this.loadGameBis(data.gameId, data.turn, data.player, data.squares, data.blackFallenSoldiers, data.whiteFallenSoldiers)
+        });
     }
 
-    loadGame = async () => {
+    loadGameBis(gameId, player_turn, player_number, squares, blackFallenSoldiers, whiteFallenSoldiers) {
+
+        const pieceClasses = new Map([['Bishop', Bishop], ['King', King], ['Knight', Knight], ['Pawn', Pawn], ['Queen', Queen], ['Rook', Rook]]);
+        squares.forEach(function (part, index, arr) {
+            if (arr[index]) {
+                let pieceUrl = arr[index].style.backgroundImage;
+                for (let pieceUrlsKey in pieceUrls) {
+                    if (pieceUrl.includes(pieceUrls[pieceUrlsKey]["white"]) || pieceUrl.includes(pieceUrls[pieceUrlsKey]["black"])) {
+                        arr[index] = Object.assign(new (pieceClasses.get(pieceUrlsKey)), arr[index]);
+                    }
+                }
+            }
+        });
+
+        this.props.updateGameInfos(gameId, player_turn, player_number, squares, blackFallenSoldiers, whiteFallenSoldiers);
+
+    }
+
+    handleChange = (event) => {
+        this.setState({
+            optionsGameId: parseInt(event.target.value)
+        });
+    };
+
+    loadGame = async (isGameIdLoad) => {
         try {
             const res = await API.load_game(this.state.optionsGameId);
             let player_number = 0;
@@ -46,7 +74,7 @@ export default class Options extends React.Component {
                     }
                 });
 
-                this.props.loadGame(this.state.optionsGameId, res.data.player_turn, player_number, res.data.board, res.data.blackFallenSoldiers, res.data.whiteFallenSoldiers);
+                this.props.updateGameInfos(this.state.optionsGameId, res.data.player_turn, player_number, res.data.board, res.data.blackFallenSoldiers, res.data.whiteFallenSoldiers);
                 this.loadModalDisplay(false);
 
             } else {
@@ -56,9 +84,14 @@ export default class Options extends React.Component {
 
         } catch (error) {
             console.error(error);
+            this.props.updateGameId(this.state.optionsGameId);
         }
 
         this.saveModalDisplay(false);
+
+        if (isGameIdLoad) {
+            API.socket.emit("gameStartId", this.state.optionsGameId)
+        }
     };
 
     handleChange = (event) => {
@@ -81,12 +114,12 @@ export default class Options extends React.Component {
     };
 
 
-    saveGameDisplay() {
+    selectGameIdDisplay() {
 
         return (
             <>
 
-                <Modal show={this.state.isSaveModalDisplayed}>
+                <Modal show={this.state.isSaveModalDisplayed} onHide={() => this.saveModalDisplay(true)}>
                     <Modal.Header closeButton>
                         <Modal.Title>Game ID ? (Default 1)</Modal.Title>
                     </Modal.Header>
@@ -101,7 +134,7 @@ export default class Options extends React.Component {
                         </FormGroup>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="primary" onClick={this.loadGame}>
+                        <Button variant="primary" onClick={() => this.loadGame(true)}>
                             Save ID
                         </Button>
                     </Modal.Footer>
@@ -139,7 +172,7 @@ export default class Options extends React.Component {
                         <Button variant="secondary" onClick={() => this.loadModalDisplay(false)}>
                             Close
                         </Button>
-                        <Button variant="primary" onClick={this.loadGame}>
+                        <Button variant="primary" onClick={() => this.loadGame(false)}>
                             Load
                         </Button>
                     </Modal.Footer>
@@ -153,7 +186,7 @@ export default class Options extends React.Component {
         return (
             <div className="form-group">
                 <h3>Options</h3>
-                {this.saveGameDisplay()}
+                {this.selectGameIdDisplay()}
                 {this.loadGameDisplay()}
             </div>
         );
