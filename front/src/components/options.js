@@ -52,7 +52,19 @@ export default class Options extends React.Component {
     };
 
     loadGame = async (isGameIdLoad) => {
+
         try {
+            //todo handle when too many players on game id
+            if (isGameIdLoad) {
+                API.socket.emit("gameStartId", this.state.optionsGameId, (response) => {
+                    console.log(response.status)
+                    if (response.status !== "TOO_MANY_PLAYERS") {
+                        this.props.updateGamePlayer(response.status)
+                    } else {
+
+                    }
+                });
+            }
             const res = await API.load_game(this.state.optionsGameId);
             let player_number = 0;
             if (res.status === 200) {
@@ -81,17 +93,12 @@ export default class Options extends React.Component {
                 console.log("loading failed");
             }
 
-
         } catch (error) {
             console.error(error);
             this.props.updateGameId(this.state.optionsGameId);
         }
 
         this.saveModalDisplay(false);
-
-        if (isGameIdLoad) {
-            API.socket.emit("gameStartId", this.state.optionsGameId)
-        }
     };
 
     handleChange = (event) => {

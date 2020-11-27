@@ -20,99 +20,109 @@ export default class Game extends React.Component {
             sourceSelection: -1,
             status: '',
             turn: 'white',
-            gameId: 1
+            gameId: 1,
+            myPlayer: 0,
+            myTurn: 'none'
         }
 
         this.updateGameInfos = this.updateGameInfos.bind(this);
         this.updateGameId = this.updateGameId.bind(this);
+        this.updateGamePlayer = this.updateGamePlayer.bind(this);
     }
 
     handleClick(i) {
         const squares = [...this.state.squares];
 
-        if (this.state.sourceSelection === -1) {
-            if (!squares[i] || squares[i].player !== this.state.player) {
-                this.setState({status: "Wrong selection. Choose player " + this.state.player + " pieces."});
-                if (squares[i]) {
-                    squares[i].style = {...squares[i].style, backgroundColor: ""};
-                }
-            } else {
-                squares[i].style = {...squares[i].style, backgroundColor: "RGB(111,143,114)"}; // Emerald from http://omgchess.blogspot.com/2015/09/chess-board-color-schemes.html
-                this.setState({
-                    status: "Choose destination for the selected piece",
-                    sourceSelection: i
-                })
-            }
-            return
-        }
+        if (this.state.player === this.state.myPlayer) {
 
-        squares[this.state.sourceSelection].style = {...squares[this.state.sourceSelection].style, backgroundColor: ""};
 
-        if (squares[i] && squares[i].player === this.state.player) {
-            this.setState({
-                status: "Wrong selection. Choose valid source and destination again.",
-                sourceSelection: -1,
-            });
-        } else {
-
-            const whiteFallenSoldiers = [];
-            const blackFallenSoldiers = [];
-            const isDestEnemyOccupied = Boolean(squares[i]);
-            //console.log(squares[this.state.sourceSelection]);
-            const isMovePossible = squares[this.state.sourceSelection].isMovePossible(this.state.sourceSelection, i, isDestEnemyOccupied);
-
-            if (isMovePossible) {
-                if (squares[i] !== null) {
-                    if (squares[i].player === 1) {
-                        whiteFallenSoldiers.push(squares[i]);
-                    } else {
-                        blackFallenSoldiers.push(squares[i]);
+            if (this.state.sourceSelection === -1) {
+                if (!squares[i] || squares[i].player !== this.state.myPlayer) {
+                    this.setState({status: "Wrong selection. Choose player " + this.state.myPlayer + " pieces."});
+                    if (squares[i]) {
+                        squares[i].style = {...squares[i].style, backgroundColor: ""};
                     }
-                }
-
-                squares[i] = squares[this.state.sourceSelection];
-                squares[this.state.sourceSelection] = null;
-                const isCheckMe = this.isCheckForPlayer(squares, this.state.player)
-
-                if (isCheckMe) {
-
-                    const isCheckMate = this.isCheckMateForPlayer(squares, this.state.player)
-                    if (isCheckMate) {
-                        this.setState(oldState => ({
-                            status: "Check Mate!",
-                            sourceSelection: -1,
-                        }))
-                    } else {
-                        this.setState(oldState => ({
-                            status: "Wrong selection. Choose valid source and destination again. Now you have a check!",
-                            sourceSelection: -1,
-                        }))
-                    }
-
                 } else {
-                    let player = this.state.player === 1 ? 2 : 1;
-                    let turn = this.state.turn === 'white' ? 'black' : 'white';
-
-                    this.setState(oldState => ({
-                        sourceSelection: -1,
-                        squares,
-                        whiteFallenSoldiers: [...oldState.whiteFallenSoldiers, ...whiteFallenSoldiers],
-                        blackFallenSoldiers: [...oldState.blackFallenSoldiers, ...blackFallenSoldiers],
-                        player,
-                        status: '',
-                        turn
-                    }), () => {
-                        this.saveGame();
-                    });
-
-
+                    squares[i].style = {...squares[i].style, backgroundColor: "RGB(111,143,114)"};
+                    this.setState({
+                        status: "Choose destination for the selected piece",
+                        sourceSelection: i
+                    })
                 }
-            } else {
+                return
+            }
+
+            squares[this.state.sourceSelection].style = {
+                ...squares[this.state.sourceSelection].style,
+                backgroundColor: ""
+            };
+
+            if (squares[i] && squares[i].player === this.state.myPlayer) {
                 this.setState({
                     status: "Wrong selection. Choose valid source and destination again.",
                     sourceSelection: -1,
                 });
+            } else {
+
+                const whiteFallenSoldiers = [];
+                const blackFallenSoldiers = [];
+                const isDestEnemyOccupied = Boolean(squares[i]);
+                const isMovePossible = squares[this.state.sourceSelection].isMovePossible(this.state.sourceSelection, i, isDestEnemyOccupied);
+
+                if (isMovePossible) {
+                    if (squares[i] !== null) {
+                        if (squares[i].player === 1) {
+                            whiteFallenSoldiers.push(squares[i]);
+                        } else {
+                            blackFallenSoldiers.push(squares[i]);
+                        }
+                    }
+
+                    squares[i] = squares[this.state.sourceSelection];
+                    squares[this.state.sourceSelection] = null;
+                    const isCheckMe = this.isCheckForPlayer(squares, this.state.myPlayer)
+
+                    if (isCheckMe) {
+
+                        const isCheckMate = this.isCheckMateForPlayer(squares, this.state.myPlayer)
+                        if (isCheckMate) {
+                            this.setState(oldState => ({
+                                status: "Check Mate!",
+                                sourceSelection: -1,
+                            }))
+                        } else {
+                            this.setState(oldState => ({
+                                status: "Wrong selection. Choose valid source and destination again. Now you have a check!",
+                                sourceSelection: -1,
+                            }))
+                        }
+
+                    } else {
+                        let player = this.state.player === 1 ? 2 : 1;
+                        let turn = this.state.turn === 'white' ? 'black' : 'white';
+
+                        this.setState(oldState => ({
+                            sourceSelection: -1,
+                            squares,
+                            whiteFallenSoldiers: [...oldState.whiteFallenSoldiers, ...whiteFallenSoldiers],
+                            blackFallenSoldiers: [...oldState.blackFallenSoldiers, ...blackFallenSoldiers],
+                            player,
+                            status: '',
+                            turn
+                        }), () => {
+                            this.saveGame();
+                        });
+
+
+                    }
+                } else {
+                    this.setState({
+                        status: "Wrong selection. Choose valid source and destination again.",
+                        sourceSelection: -1,
+                    });
+                }
             }
+
         }
     }
 
@@ -133,6 +143,13 @@ export default class Game extends React.Component {
     updateGameId(gameId) {
         this.setState({
             gameId: gameId,
+        });
+    }
+
+    updateGamePlayer(color) {
+        this.setState({
+            myPlayer: color === 'white' ? 1 : 2,
+            myTurn: color,
         });
     }
 
@@ -185,10 +202,14 @@ export default class Game extends React.Component {
                         />
                     </div>
                     <div className="game-info">
+                        <h3>My pieces</h3>
+                        <div id="player-turn-box" style={{backgroundColor: this.state.myTurn}}>
+                        </div>
+
                         <h3>Turn</h3>
                         <div id="player-turn-box" style={{backgroundColor: this.state.turn}}>
-
                         </div>
+
                         <div className="game-status">{this.state.status}</div>
 
                         <div className="fallen-soldier-block">
@@ -210,6 +231,7 @@ export default class Game extends React.Component {
                     whiteFallenSoldiers={this.state.whiteFallenSoldiers}
                     updateGameInfos={this.updateGameInfos}
                     updateGameId={this.updateGameId}
+                    updateGamePlayer={this.updateGamePlayer}
                     gameId={this.state.gameId}
                 />
 

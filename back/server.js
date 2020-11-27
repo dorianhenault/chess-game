@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require('body-parser');
+const playersFinder = require("./utils/playersGameFinder")
 
 //db connection
 mongoose
@@ -49,21 +50,39 @@ const io = require('socket.io')(http, {
 });
 http.listen(port, () => console.log(`Listening on port ${port}`));
 
+let playersPerGameId = {};
 //socketIO
 io.on('connection', (socket) => {
 
-    //todo handle client disconnect
-    /*socket.on('disconnect', () => {
-        console.log('user disconnected');
-    });*/
+    socket.on('disconnect', () => {
+        playersFinder.handlePlayerDisconnection(playersPerGameId, socket.id)
+    });
 
-    socket.on('gameStartId', (gameId) => {
-        console.log(gameId + " Joined");
-        socket.join("game_" + gameId)
+    //START AND UPDATE GAME VALUE WITH AN ID
+    socket.on('gameStartId', (gameId, callback) => {
+        let callBackValue;
+        if (!playersPerGameId[gameId]) {
+            playersPerGameId[gameId] = [];
+        }
+
+        if (!playersFinder.isPlayerPresent(gameId, playersPerGameId, "white")) {
+            callBackValue = "white";
+        } else if (!playersFinder.isPlayerPresent(gameId, playersPerGameId, "black")) {
+            callBackValue = "black";
+        } else if (playersFinder.isPlayerPresent(gameId, playersPerGameId, "white") && playersFinder.isPlayerPresent(gameId, playersPerGameId, "black")) {
+            callBackValue = "TOO_MANY_PLAYERS";
+        }
+        playersPerGameId[gameId].push([callBackValue, socket.id]);
+        callback({
+            status: callBackValue
+        });
+
+        if (playersFinder.isSocketEligibleForGame(gameId, playersPerGameId, socket.id)) {
+            console.log(gameId + " Joined");
+            socket.join("game_" + gameId)
+        }
+
         socket.on("game_" + gameId, (gameData) => {
-            console.log(gameId)
-            console.log(gameData.player)
-            console.log("--")
             socket.to("game_" + gameId).emit("gameData", gameData);
         });
 
