@@ -7,6 +7,7 @@ import initialiseChessBoard from '../helpers/board-initialiser.js';
 import King from "../pieces/king";
 import Options from "./options";
 import API from "../helpers/API";
+import objectToPieceConverter from "../helpers/object-to-piece-helper";
 
 
 export default class Game extends React.Component {
@@ -24,17 +25,19 @@ export default class Game extends React.Component {
             myPlayer: 0,
             myTurn: 'none'
         }
-
         this.updateGameInfos = this.updateGameInfos.bind(this);
         this.updateGameId = this.updateGameId.bind(this);
         this.updateGamePlayer = this.updateGamePlayer.bind(this);
+
+        API.socket.on("gameData", (data) => {
+            this.updateOpponentMove(data.gameId, data.turn, data.player, data.squares, data.blackFallenSoldiers, data.whiteFallenSoldiers)
+        });
     }
 
     handleClick(i) {
         const squares = [...this.state.squares];
 
         if (this.state.player === this.state.myPlayer) {
-
 
             if (this.state.sourceSelection === -1) {
                 if (!squares[i] || squares[i].player !== this.state.myPlayer) {
@@ -126,12 +129,17 @@ export default class Game extends React.Component {
         }
     }
 
-    updateGameInfos(gameId, player_turn, player_number, squares, blackFallenSoldiers, whiteFallenSoldiers) {
 
+    updateOpponentMove(gameId, playerTurn, playerNumber, squares, blackFallenSoldiers, whiteFallenSoldiers) {
+        objectToPieceConverter.convertSquareObjectToPieces(squares);
+        this.updateGameInfos(gameId, playerTurn, playerNumber, squares, blackFallenSoldiers, whiteFallenSoldiers);
+    }
+
+    updateGameInfos(gameId, playerTurn, playerNumber, squares, blackFallenSoldiers, whiteFallenSoldiers) {
         this.setState({
             gameId: gameId,
-            turn: player_turn,
-            player: player_number,
+            turn: playerTurn,
+            player: playerNumber,
             squares: squares,
             blackFallenSoldiers: blackFallenSoldiers,
             whiteFallenSoldiers: whiteFallenSoldiers,
@@ -155,7 +163,7 @@ export default class Game extends React.Component {
 
     saveGame() {
         try {
-            API.save_game(this.state.gameId, this.state.turn, this.state.squares, this.state.blackFallenSoldiers, this.state.whiteFallenSoldiers);
+            API.saveGame(this.state.gameId, this.state.turn, this.state.squares, this.state.blackFallenSoldiers, this.state.whiteFallenSoldiers);
         } catch (error) {
             console.error(error);
         }
@@ -189,7 +197,6 @@ export default class Game extends React.Component {
         //todo
     }
 
-
     render() {
 
         return (
@@ -201,6 +208,7 @@ export default class Game extends React.Component {
                             onClick={(i) => this.handleClick(i)}
                         />
                     </div>
+
                     <div className="game-info">
                         <h3>My pieces</h3>
                         <div id="player-turn-box" style={{backgroundColor: this.state.myTurn}}>
@@ -209,11 +217,9 @@ export default class Game extends React.Component {
                         <h3>Turn</h3>
                         <div id="player-turn-box" style={{backgroundColor: this.state.turn}}>
                         </div>
-
                         <div className="game-status">{this.state.status}</div>
 
                         <div className="fallen-soldier-block">
-
                             {<FallenSoldierBlock
                                 whiteFallenSoldiers={this.state.whiteFallenSoldiers}
                                 blackFallenSoldiers={this.state.blackFallenSoldiers}

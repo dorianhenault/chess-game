@@ -1,20 +1,20 @@
 const Board = require("../schema/schemaBoard.js");
 
 async function saveGame(req, res) {
-    const {gameId, player_turn, board, whiteFallenSoldiers, blackFallenSoldiers} = req.body;
-    if (player_turn === 'white' || player_turn === 'black') {
+    const {gameId, playerTurn, board, whiteFallenSoldiers, blackFallenSoldiers} = req.body;
+    if (playerTurn === 'white' || playerTurn === 'black') {
         try {
             let findBoard = await Board.findOne({gameId: gameId});
             if (findBoard !== null) {
                 findBoard.board = board;
-                findBoard.player_turn = player_turn;
+                findBoard.playerTurn = playerTurn;
                 findBoard.whiteFallenSoldiers = whiteFallenSoldiers;
                 findBoard.blackFallenSoldiers = blackFallenSoldiers;
             } else {
                 findBoard = new Board(
                     {
                         gameId: gameId,
-                        player_turn: player_turn,
+                        playerTurn: playerTurn,
                         board: board,
                         whiteFallenSoldiers: whiteFallenSoldiers,
                         blackFallenSoldiers: blackFallenSoldiers
@@ -26,7 +26,7 @@ async function saveGame(req, res) {
             return res.status(200).json({
                 text: "Success",
                 gameId: gameId,
-                player_turn: player_turn
+                playerTurn: playerTurn
             });
         } catch (error) {
             console.log(error)
@@ -49,7 +49,7 @@ async function loadGame(req, res) {
             return res.status(200).json({
                 gameId: findBoard.gameId,
                 board: findBoard.board,
-                player_turn: findBoard.player_turn,
+                playerTurn: findBoard.playerTurn,
                 whiteFallenSoldiers: findBoard.whiteFallenSoldiers,
                 blackFallenSoldiers: findBoard.blackFallenSoldiers
             });

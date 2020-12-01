@@ -17,7 +17,7 @@ const boardSchema = mongoose.Schema(
             unique: true,
             required: true
         },
-        player_turn: {
+        playerTurn: {
             type: String,
             required: true
         },

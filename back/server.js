@@ -50,11 +50,12 @@ const io = require('socket.io')(http, {
 });
 http.listen(port, () => console.log(`Listening on port ${port}`));
 
-let playersPerGameId = {};
 //socketIO
+let playersPerGameId = {};
 io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
+        console.log(socket.id + " disconnected.")
         playersFinder.handlePlayerDisconnection(playersPerGameId, socket.id)
     });
 
@@ -78,7 +79,7 @@ io.on('connection', (socket) => {
         });
 
         if (playersFinder.isSocketEligibleForGame(gameId, playersPerGameId, socket.id)) {
-            console.log(gameId + " Joined");
+            console.log(socket.id + " joined game " + gameId + ".");
             socket.join("game_" + gameId)
         }
 

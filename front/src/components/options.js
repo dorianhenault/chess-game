@@ -3,46 +3,16 @@ import React from 'react';
 import '../index.css';
 import {Modal, Button, FormControl, FormGroup, FormLabel} from "react-bootstrap";
 import API from "../helpers/API";
-import Bishop from "../pieces/bishop";
-import King from "../pieces/king";
-import Knight from "../pieces/knight";
-import Pawn from "../pieces/pawn";
-import Queen from "../pieces/queen";
-import Rook from "../pieces/rook";
-
-const pieceUrls = require('../dictionaries/piecesUrls.json');
-
+import objectToPieceConverter from "../helpers/object-to-piece-helper";
 
 export default class Options extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             isSaveModalDisplayed: true,
-            isLoadModalDisplayed: false,
-            optionsGameId: this.props.gameId
+            optionsGameId: this.props.gameId,
+            isGameFull: false,
         }
-
-        API.socket.on("gameData", (data) => {
-            this.loadGameBis(data.gameId, data.turn, data.player, data.squares, data.blackFallenSoldiers, data.whiteFallenSoldiers)
-        });
-    }
-
-    loadGameBis(gameId, player_turn, player_number, squares, blackFallenSoldiers, whiteFallenSoldiers) {
-
-        const pieceClasses = new Map([['Bishop', Bishop], ['King', King], ['Knight', Knight], ['Pawn', Pawn], ['Queen', Queen], ['Rook', Rook]]);
-        squares.forEach(function (part, index, arr) {
-            if (arr[index]) {
-                let pieceUrl = arr[index].style.backgroundImage;
-                for (let pieceUrlsKey in pieceUrls) {
-                    if (pieceUrl.includes(pieceUrls[pieceUrlsKey]["white"]) || pieceUrl.includes(pieceUrls[pieceUrlsKey]["black"])) {
-                        arr[index] = Object.assign(new (pieceClasses.get(pieceUrlsKey)), arr[index]);
-                    }
-                }
-            }
-        });
-
-        this.props.updateGameInfos(gameId, player_turn, player_number, squares, blackFallenSoldiers, whiteFallenSoldiers);
-
     }
 
     handleChange = (event) => {
@@ -51,43 +21,33 @@ export default class Options extends React.Component {
         });
     };
 
-    loadGame = async (isGameIdLoad) => {
+    selectGameId = async () => {
+
+        API.socket.emit("gameStartId", this.state.optionsGameId, (response) => {
+            if (response.status !== "TOO_MANY_PLAYERS") {
+                this.props.updateGamePlayer(response.status)
+                this.updateGameFullErrorMessage(false);
+                this.loadGame();
+            } else {
+                this.updateGameFullErrorMessage(true);
+            }
+        });
+
+    }
+
+    loadGame = async () => {
 
         try {
-            //todo handle when too many players on game id
-            if (isGameIdLoad) {
-                API.socket.emit("gameStartId", this.state.optionsGameId, (response) => {
-                    console.log(response.status)
-                    if (response.status !== "TOO_MANY_PLAYERS") {
-                        this.props.updateGamePlayer(response.status)
-                    } else {
-
-                    }
-                });
-            }
-            const res = await API.load_game(this.state.optionsGameId);
-            let player_number = 0;
+            const res = await API.loadGame(this.state.optionsGameId);
+            let playerNumber = 0;
             if (res.status === 200) {
-                if (res.data.player_turn === 'white') {
-                    player_number = 1;
+                if (res.data.playerTurn === 'white') {
+                    playerNumber = 1;
                 } else {
-                    player_number = 2;
+                    playerNumber = 2;
                 }
-
-                const pieceClasses = new Map([['Bishop', Bishop], ['King', King], ['Knight', Knight], ['Pawn', Pawn], ['Queen', Queen], ['Rook', Rook]]);
-                res.data.board.forEach(function (part, index, arr) {
-                    if (arr[index]) {
-                        let pieceUrl = arr[index].style.backgroundImage;
-                        for (let pieceUrlsKey in pieceUrls) {
-                            if (pieceUrl.includes(pieceUrls[pieceUrlsKey]["white"]) || pieceUrl.includes(pieceUrls[pieceUrlsKey]["black"])) {
-                                arr[index] = Object.assign(new (pieceClasses.get(pieceUrlsKey)), arr[index]);
-                            }
-                        }
-                    }
-                });
-
-                this.props.updateGameInfos(this.state.optionsGameId, res.data.player_turn, player_number, res.data.board, res.data.blackFallenSoldiers, res.data.whiteFallenSoldiers);
-                this.loadModalDisplay(false);
+                objectToPieceConverter.convertSquareObjectToPieces(res.data.board)
+                this.props.updateGameInfos(this.state.optionsGameId, res.data.playerTurn, playerNumber, res.data.board, res.data.blackFallenSoldiers, res.data.whiteFallenSoldiers);
 
             } else {
                 console.log("loading failed");
@@ -107,6 +67,12 @@ export default class Options extends React.Component {
         });
     };
 
+    updateGameFullErrorMessage = (bool) => {
+        this.setState({
+            isGameFull: bool
+        })
+    }
+
     saveModalDisplay = (bool) => {
         this.setState({
             isSaveModalDisplayed: bool
@@ -114,54 +80,12 @@ export default class Options extends React.Component {
 
     };
 
-    loadModalDisplay = (bool) => {
-        this.setState({
-            isLoadModalDisplayed: bool
-        });
-    };
-
-
     selectGameIdDisplay() {
 
         return (
             <>
 
                 <Modal show={this.state.isSaveModalDisplayed} onHide={() => this.saveModalDisplay(true)}>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Game ID ? (Default 1)</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <FormGroup className="form-group" variant="secondary">
-                            <FormControl
-                                className="form-control form-control-sm"
-                                defaultValue={this.state.optionsGameId}
-                                onChange={this.handleChange}
-                                type="optionsGameId"
-                            />
-                        </FormGroup>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="primary" onClick={() => this.loadGame(true)}>
-                            Save ID
-                        </Button>
-                    </Modal.Footer>
-                </Modal>
-            </>
-        );
-    }
-
-    loadGameDisplay() {
-
-
-        return (
-            <>
-                <div className="form-group">
-                    <Button onClick={() => this.loadModalDisplay(true)} variant="secondary" type="button">
-                        Load Game
-                    </Button>
-                </div>
-
-                <Modal show={this.state.isLoadModalDisplayed} onHide={() => this.loadModalDisplay(false)}>
                     <Modal.Header closeButton>
                         <Modal.Title>Game ID ?</Modal.Title>
                     </Modal.Header>
@@ -174,13 +98,16 @@ export default class Options extends React.Component {
                                 type="optionsGameId"
                             />
                         </FormGroup>
+                        {this.state.isGameFull ?
+                            <div className="game-full">
+                                The selected game is already full, choose another one
+                            </div>
+                            : null
+                        }
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="secondary" onClick={() => this.loadModalDisplay(false)}>
-                            Close
-                        </Button>
-                        <Button variant="primary" onClick={() => this.loadGame(false)}>
-                            Load
+                        <Button variant="primary" onClick={this.selectGameId}>
+                            Save ID
                         </Button>
                     </Modal.Footer>
                 </Modal>
@@ -191,10 +118,8 @@ export default class Options extends React.Component {
 
     render() {
         return (
-            <div className="form-group">
-                <h3>Options</h3>
+            <div>
                 {this.selectGameIdDisplay()}
-                {this.loadGameDisplay()}
             </div>
         );
     }
