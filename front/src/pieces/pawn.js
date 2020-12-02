@@ -12,7 +12,8 @@ export default class Pawn extends Piece {
     }
   }
 
-  isMovePossible(src, dest, isDestEnemyOccupied) {
+  isMovePossible(src, dest, squares) {
+    const isDestEnemyOccupied = Boolean(squares[dest]);
 
     if (this.player === 1) {
       if ((dest === src - 8 && !isDestEnemyOccupied) || (dest === src - 16 && !isDestEnemyOccupied && this.initialPositions[1].indexOf(src) !== -1)) {

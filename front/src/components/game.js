@@ -66,11 +66,9 @@ export default class Game extends React.Component {
                     sourceSelection: -1,
                 });
             } else {
-
                 const whiteFallenSoldiers = [];
                 const blackFallenSoldiers = [];
-                const isDestEnemyOccupied = Boolean(squares[i]);
-                const isMovePossible = squares[this.state.sourceSelection].isMovePossible(this.state.sourceSelection, i, isDestEnemyOccupied);
+                const isMovePossible = squares[this.state.sourceSelection].isMovePossible(this.state.sourceSelection, i, squares);
 
                 if (isMovePossible) {
                     if (squares[i] !== null) {
