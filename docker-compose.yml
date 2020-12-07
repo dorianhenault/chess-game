@@ -1,0 +1,42 @@
+version: "3"
+services:
+  front:
+    container_name: front
+    build: ./front
+    ports:
+      - 3000:3000
+    volumes:
+      - /usr/src/app/front
+    environment:
+      - PORT=3000
+    depends_on:
+      - back
+    #temporary fix because of react-script 3.4.1 issue
+    stdin_open: true
+    network_mode: host
+  back:
+    container_name: back
+    build: ./back
+    ports:
+      - 8000:8000
+    volumes:
+      - /usr/src/app/back
+    environment:
+      - PORT=8000
+    depends_on:
+      - mongo
+    network_mode: host
+
+  mongo:
+    image: mongo:3.6
+    volumes:
+      - mongo-storage:/data/db
+    expose:
+      - 27017
+    ports:
+      - 27017:27017
+    network_mode: host
+
+volumes:
+  mongo-storage:
+    driver: local
